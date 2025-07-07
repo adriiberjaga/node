@@ -1,6 +1,8 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import chalk from 'chalk';
 import { z } from 'zod';
+import logger from './middlewares/logger.js';
+import HTTPError from './models/HTTPError.js';
 interface User {
     email: string;
     password: string;
@@ -32,11 +34,7 @@ const registerSchema = z
 
 
 const app = express();
-app.use((req, res, next) => {
-    const text = `Peticion: ${req.method} - ${req.url} - ${new Date().toLocaleString('es-ES')}`;
-    console.log(chalk.blue(text));
-    next();
-})
+app.use(logger)
 app.use(express.json())
 
 // ### USUARIOS
@@ -50,17 +48,36 @@ app.use(express.json())
 // -AUTENTICACION: NO
 
 
-
+// usuarios harcodeados
+const users = [
+    {
+        email: 'user@example.com',
+        password: '12345678k',
+        userName: 'megauser3000',
+        id: 1
+    },
+    {
+        email: 'admin@example.com',
+        password: '12345678k',
+        userName: 'admin5000',
+        id: 2
+    },
+    {
+        email: 'adri@gmail.com',
+        password: '12345678k',
+        userName: 'adriiberjaga',
+        id: 3
+    }
+]
 // -Registra un nuevo usuario
 app.post('/users/register', (req, res) => {
     const newUser = req.body;
+    if (users.find(user => user.email === newUser.email)) {
+        throw new HTTPError(400, 'Usuario ya existente');
+    }
     const result = registerSchema.safeParse(newUser)
     if (!result.success) {
-        res.status(400).json({
-  message: "Error de validación",
-  errors: result.error.flatten().fieldErrors
-});
-
+        throw new HTTPError(400, 'Error de validación');
     } else {
         console.log(`Usuario creado: ${newUser.username}`);
         res.send('Usuario registrado');
@@ -98,7 +115,19 @@ app.get('/movies/watchlist/:movieId', (req, res) => {
         res.send('Pelicula no encontrada');
     }
 })
+app.use((error: Error | HTTPError, req: Request, res: Response, next: NextFunction) => {
+    console.log('❌', error.message) 
+    if(error instanceof HTTPError){
+        res.status(error.status).send({error: error.message});
+        return
+    } 
+    res.status(500).send({error: 'Internal Server Error'});
+});
 
+//* Middleware RUTA NO ENCONTRADA
+app.use(/(.*)/, (req, res) => {
+  res.status(404).send({ error: 'Ruta no establecida' });
+});
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
