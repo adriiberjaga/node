@@ -1,35 +1,16 @@
 import express, { Request, Response, NextFunction } from 'express';
 import chalk from 'chalk';
-import { z } from 'zod';
 import logger from './middlewares/logger.js';
 import HTTPError from './models/HTTPError.js';
+import { loginSchema, registerSchema } from './schemas/formSchemas.js';
+import { z } from 'zod/v4';
+
 interface User {
     email: string;
     password: string;
     userName: string;
+    id: number;
 }
-const loginSchema = z.object({
-  email: z.string().email('Email inválido').min(1, 'Email requerido'),
-  password: z.string().min(1, 'Password requerido'),
-});
-const registerSchema = z
-  .object({
-    username: z
-      .string()
-      .min(1, 'Username is required')
-      .min(3, 'At least 3 characters long')
-      .max(20, 'Maximum 20 characters long'),
-    email: z
-      .string()
-      .email('Email is required')
-      .min(1, 'Email is required')
-      .max(100, 'Maximum 100 characters long'),
-    password: z
-      .string()
-      .min(1, 'Password is required')
-      .regex(/^[a-zA-Z0-9]{8,16}$/, 'Password must be 8-16 characters long'),
-    confirmPassword: z.string().min(1, 'You need to complete the password'),
-  })
 
 
 
@@ -49,7 +30,7 @@ app.use(express.json())
 
 
 // usuarios harcodeados
-const users = [
+const users: User[] = [
     {
         email: 'user@example.com',
         password: '12345678k',
@@ -69,20 +50,46 @@ const users = [
         id: 3
     }
 ]
-// -Registra un nuevo usuario
-app.post('/users/register', (req, res) => {
-    const newUser = req.body;
-    if (users.find(user => user.email === newUser.email)) {
-        throw new HTTPError(400, 'Usuario ya existente');
-    }
-    const result = registerSchema.safeParse(newUser)
-    if (!result.success) {
-        throw new HTTPError(400, 'Error de validación');
-    } else {
-        console.log(`Usuario creado: ${newUser.username}`);
-        res.send('Usuario registrado');
+
+// OBTENER USUARIO
+app.get('/users/:userId', (req, res) => {
+    const userId = req.params.userId
+    const userIdToNumber = Number(userId)
+    const user = users.map((user) => {
+
+    })
+    if (userIdToNumber === 1 ) {
+        res.send('Tu usuario es', )
     }
 })
+
+
+// -REGISTRAR USUARIO
+app.post('/users/register', (req, res) => {
+    const newUser = req.body;
+
+    const { success, data: validatedUser, error } = registerSchema.safeParse(newUser)
+    if (!success) {
+        console.log(z.prettifyError(error));
+        throw new HTTPError(400, 'Error de validación');
+    }
+
+
+    const userByEmail = users.find(user => user.email === validatedUser.email)
+    const userByUsername = users.find(user => user.userName === validatedUser.username)
+    if (userByEmail) {
+        throw new HTTPError(400, 'Usuario ya registrado con ese email');
+    }
+    if (userByUsername) {
+        throw new HTTPError(400, 'Usuario ya registrado con ese username');
+    }
+    
+    console.log(`Usuario creado: ${validatedUser.username}`);
+    res.send('Usuario registrado');
+    
+})
+
+
 // INICIAR SESSION
 app.post('/users/login',(req, res) => {
     const { email, password } = req.body;
@@ -95,26 +102,39 @@ app.post('/users/login',(req, res) => {
         return;
     }
 })
-app.delete('users/:userId', (req, res) => {
-    const { password } = req.body;
-    const userId = req.params.userId;
-    if (password === '12345678k') {
-        res.status(200).json({ message: 'Usuario eliminado' });
-        return;
-    } else {
-        res.status(400).json({ message: 'Contraseña incorrecta' });
-        return;
-    }
-})
+// Eliminar usuario
+app.delete('/users/:userId', (req, res) => {
+    const { password, userName } = req.body;
+    const userId = Number(req.params.userId);
 
-app.get('/movies/watchlist/:movieId', (req, res) => {
-    const movieId = req.params.movieId;
-    if (movieId === '1') {
-        res.send('Movie 1 en la lista de peliculas que el usuario ha añadido');
-    } else {
-        res.send('Pelicula no encontrada');
+    // Buscamos al usuario por ID
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+        res.status(404).json({ message: 'Usuario no encontrado' });
+        return
     }
-})
+
+    const user = users[userIndex];
+
+    // Verificar si el nombre de usuario y la contraseña coinciden
+    if (user.userName !== userName) {
+         res.status(400).json({ message: 'Nombre de usuario incorrecto' });
+         return
+    }
+
+    if (user.password !== password) {
+         res.status(400).json({ message: 'Contraseña incorrecta' });
+         return
+    }
+
+    // Eliminar al usuario
+    users.splice(userIndex, 1);
+
+     res.status(200).json({ message: 'Usuario eliminado correctamente' });
+     return
+});
+
+
 app.use((error: Error | HTTPError, req: Request, res: Response, next: NextFunction) => {
     console.log('❌', error.message) 
     if(error instanceof HTTPError){
