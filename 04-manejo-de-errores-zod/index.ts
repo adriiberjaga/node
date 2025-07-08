@@ -4,6 +4,7 @@ import logger from './middlewares/logger.js';
 import HTTPError from './models/HTTPError.js';
 import { loginSchema, registerSchema } from './schemas/formSchemas.js';
 import { z } from 'zod/v4';
+import cors from 'cors';
 
 interface User {
     email: string;
@@ -15,6 +16,8 @@ interface User {
 
 
 const app = express();
+app.use(cors());
+
 app.use(logger)
 app.use(express.json())
 
@@ -96,8 +99,22 @@ app.post('/users/register', (req, res) => {
         throw new HTTPError(400, 'Usuario ya registrado con ese username');
     }
     
-    console.log(`Usuario creado: ${validatedUser.username}`);
-    res.send('Usuario registrado');
+      users.push({
+    ...validatedUser,
+    id: users.length + 1,
+  });
+
+  console.log(`✅ Usuario creado: ${validatedUser.username}`);
+
+  // Devuelve JSON con éxito:
+   res.status(201).json({
+    message: 'Usuario registrado correctamente',
+    user: {
+      username: validatedUser.username,
+      email: validatedUser.email,
+    },
+  });
+
     
 })
 
