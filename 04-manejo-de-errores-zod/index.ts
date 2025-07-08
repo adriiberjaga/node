@@ -8,7 +8,7 @@ import { z } from 'zod/v4';
 interface User {
     email: string;
     password: string;
-    userName: string;
+    username: string;
     id: number;
 }
 
@@ -34,33 +34,45 @@ const users: User[] = [
     {
         email: 'user@example.com',
         password: '12345678k',
-        userName: 'megauser3000',
+        username: 'megauser3000',
         id: 1
     },
     {
         email: 'admin@example.com',
         password: '12345678k',
-        userName: 'admin5000',
+        username: 'admin5000',
         id: 2
     },
     {
         email: 'adri@gmail.com',
         password: '12345678k',
-        userName: 'adriiberjaga',
+        username: 'adriiberjaga',
         id: 3
     }
 ]
 
 // OBTENER USUARIO
 app.get('/users/:userId', (req, res) => {
-    const userId = req.params.userId
-    const userIdToNumber = Number(userId)
-    const user = users.map((user) => {
-
-    })
-    if (userIdToNumber === 1 ) {
-        res.send('Tu usuario es', )
+    // const { username, email} = req.body NO NECESARIO
+    const userId = Number(req.params.userId)
+    if(isNaN(userId)) {
+        throw new HTTPError(404, 'Usuario no encontrado, ID invalido')
     }
+    const user = users.find(u => u.id === userId);
+
+    if(!user) {
+        throw new HTTPError(400, 'Usuario no encontrado(no hay un user con ese ID)')
+    }
+
+    res.status(200).json({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        password: user.password
+    })
+    console.log(`Bienvenido de nuevo ${user.username}`) 
+
+    
 })
 
 
@@ -76,7 +88,7 @@ app.post('/users/register', (req, res) => {
 
 
     const userByEmail = users.find(user => user.email === validatedUser.email)
-    const userByUsername = users.find(user => user.userName === validatedUser.username)
+    const userByUsername = users.find(user => user.username === validatedUser.username)
     if (userByEmail) {
         throw new HTTPError(400, 'Usuario ya registrado con ese email');
     }
@@ -92,19 +104,25 @@ app.post('/users/register', (req, res) => {
 
 // INICIAR SESSION
 app.post('/users/login',(req, res) => {
-    const { email, password } = req.body;
-    const result = loginSchema.safeParse({ email, password });
+    const { email, password, username } = req.body;
+    //validamos aqui abajo 
+    const result = loginSchema.safeParse({ email, password, username });
+    //
+
     if (!result.success) {
         res.status(400).json({ message: result.error.message });
         return;
     } else {
-        res.status(200).json({ message: 'Usuario encontrado' });
+        res.status(200).json({ message: `Usuario ${result.data.username} encontrado, entrando a tu cuenta...` });
+        console.log(`${result.data.email} - ${result.data.username}`) 
         return;
     }
 })
+
+
 // Eliminar usuario
 app.delete('/users/:userId', (req, res) => {
-    const { password, userName } = req.body;
+    const { password, username } = req.body;
     const userId = Number(req.params.userId);
 
     // Buscamos al usuario por ID
@@ -117,7 +135,7 @@ app.delete('/users/:userId', (req, res) => {
     const user = users[userIndex];
 
     // Verificar si el nombre de usuario y la contraseña coinciden
-    if (user.userName !== userName) {
+    if (user.username !== username) {
          res.status(400).json({ message: 'Nombre de usuario incorrecto' });
          return
     }

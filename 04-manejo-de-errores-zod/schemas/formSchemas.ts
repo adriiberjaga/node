@@ -1,9 +1,11 @@
 import { z } from "zod/v4";
 
 export const loginSchema = z.object({
-  email: z.string().email('Email inválido').min(1, 'Email requerido'),
+  email: z.email('Email inválido').min(1, 'Email requerido'),
   password: z.string().min(1, 'Password requerido'),
+  username: z.string().min(3, 'Username requerido'),
 });
+
 export const registerSchema = z
   .object({
     username: z.string().min(3).max(20),
