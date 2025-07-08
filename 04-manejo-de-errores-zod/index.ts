@@ -152,6 +152,7 @@ app.delete('/users/:userId', (req, res) => {
      return
 });
 
+//* Middleware ERRORS
 
 app.use((error: Error | HTTPError, req: Request, res: Response, next: NextFunction) => {
     console.log('❌', error.message) 
@@ -166,6 +167,9 @@ app.use((error: Error | HTTPError, req: Request, res: Response, next: NextFuncti
 app.use(/(.*)/, (req, res) => {
   res.status(404).send({ error: 'Ruta no establecida' });
 });
+
+
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
