@@ -5,6 +5,11 @@ import HTTPError from './models/HTTPError.js';
 import { loginSchema, registerSchema } from './schemas/formSchemas.js';
 import { z } from 'zod/v4';
 import cors from 'cors';
+import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface User {
     email: string;
@@ -48,7 +53,7 @@ const users: User[] = [
     },
     {
         email: 'adri@gmail.com',
-        password: '12345678k',
+        password: '12345678',
         username: 'adriiberjaga',
         id: 3
     }
@@ -98,43 +103,64 @@ app.post('/users/register', (req, res) => {
     if (userByUsername) {
         throw new HTTPError(400, 'Usuario ya registrado con ese username');
     }
+    const encriptedPassword = bcrypt.hashSync(validatedUser.password, 10)
+    console.log(encriptedPassword) 
     
-      users.push({
-    ...validatedUser,
-    id: users.length + 1,
-  });
+    const newUserHassed = {
+        id: users.length + 1,
+        username: validatedUser.username,
+        email: validatedUser.email,
+        password: encriptedPassword,
+    };
+    users.push(newUserHassed)
+    console.log(`✅ Usuario creado: ${newUserHassed.username}`);
 
-  console.log(`✅ Usuario creado: ${validatedUser.username}`);
-
-  // Devuelve JSON con éxito:
+ const {password, ...newUserWhithoutPassword} = newUserHassed //todo menos password
+  // Devuelve JSON AL USER SIN LA CONTRASEÑA:
    res.status(201).json({
     message: 'Usuario registrado correctamente',
-    user: {
-      username: validatedUser.username,
-      email: validatedUser.email,
-    },
+    data: newUserWhithoutPassword
   });
-
-    
+  console.log(newUserWhithoutPassword) 
 })
 
 
 // INICIAR SESSION
-app.post('/users/login',(req, res) => {
-    const { email, password, username } = req.body;
-    //validamos aqui abajo 
-    const result = loginSchema.safeParse({ email, password, username });
-    //
+app.post('/users/login', (req, res) => {
+    const user = req.body
+    const { email, password } = loginSchema.parse(user)
+
+    const result = loginSchema.safeParse({ email, password });
 
     if (!result.success) {
         res.status(400).json({ message: result.error.message });
         return;
-    } else {
-        res.status(200).json({ message: `Usuario ${result.data.username} encontrado, entrando a tu cuenta...` });
-        console.log(`${result.data.email} - ${result.data.username}`) 
-        return;
+    } 
+
+    const userFound = users.find(u => u.email === email)
+    if(!userFound) {
+        throw new HTTPError(401, 'Usuario y/o contraseñas incorrectas EMAIL')
     }
-})
+
+    const passwordMatch = bcrypt.compareSync(password, userFound.password)
+    console.log(passwordMatch) 
+    if(!passwordMatch) {
+        throw new HTTPError(401, 'Usuario y/o contraseñas incorrectas PASSWORD')
+    }
+
+    const tokenData = { id: userFound.id, username: userFound.username};
+    console.log('MIAU',tokenData) 
+
+    const token = jwt.sign(tokenData, process.env.TOKEN_SECRET!, {
+        expiresIn: '10s'
+    })
+
+    res.status(200).send({ message: `Usuario ${result.data.email} encontrado, entrando a tu cuenta...`, data: token });
+    console.log(`${result.data.email}  - TOKEN:    ${token}`);
+
+    
+});
+
 
 
 // Eliminar usuario
@@ -168,6 +194,11 @@ app.delete('/users/:userId', (req, res) => {
      res.status(200).json({ message: 'Usuario eliminado correctamente' });
      return
 });
+
+// AÑADIR PELICULAS
+
+// app.post('/')
+
 
 //* Middleware ERRORS
 
