@@ -1,1 +1,4 @@
-Peticion: POST - /users/login - 9/7/2025, 13:48:07
+Peticion: POST - /users/login - 10/7/2025, 10:22:48
+Peticion: POST - /users/login - 10/7/2025, 10:35:15
+Peticion: POST - /users/register - 10/7/2025, 10:35:19
+Peticion: POST - /users/login - 10/7/2025, 10:35:21
