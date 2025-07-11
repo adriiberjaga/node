@@ -152,10 +152,17 @@ app.post('/users/login', (req, res) => {
     console.log('MIAU',tokenData) 
 
     const token = jwt.sign(tokenData, process.env.TOKEN_SECRET!, {
-        expiresIn: '10s'
+        expiresIn: '1h'
     })
 
-    res.status(200).send({ message: `Usuario ${result.data.email} encontrado, entrando a tu cuenta...`, data: token });
+res.status(200).send({
+  message: `Usuario ${result.data.email} encontrado, entrando a tu cuenta...`,
+  data: token,
+  user: {
+    email: result.data.email,
+    username: userFound.username
+  }
+});
     console.log(`${result.data.email}  - TOKEN:    ${token}`);
 
     
