@@ -19,3 +19,17 @@ Peticion: POST - /users/login - 11/7/2025, 12:54:45
 Peticion: POST - /users/login - 11/7/2025, 12:57:12
 Peticion: POST - /users/register - 11/7/2025, 12:57:28
 Peticion: POST - /users/login - 11/7/2025, 12:57:37
+Peticion: POST - /users/register - 21/7/2025, 9:51:07
+Peticion: POST - /users/login - 21/7/2025, 9:51:17
+Peticion: POST - /users/register - 21/7/2025, 10:34:50
+Peticion: POST - /users/register - 21/7/2025, 10:37:35
+Peticion: POST - /users/register - 21/7/2025, 10:37:38
+Peticion: POST - /users/register - 21/7/2025, 10:40:17
+Peticion: POST - /users/register - 21/7/2025, 10:40:20
+Peticion: POST - /users/register - 21/7/2025, 10:41:37
+Peticion: POST - /users/register - 21/7/2025, 10:41:41
+Peticion: POST - /users/register - 21/7/2025, 10:41:45
+Peticion: POST - /users/login - 21/7/2025, 10:42:12
+Peticion: POST - /users/register - 21/7/2025, 10:45:41
+Peticion: POST - /users/login - 21/7/2025, 10:45:49
+Peticion: POST - /users/login - 21/7/2025, 10:45:54

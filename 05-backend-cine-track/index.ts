@@ -149,7 +149,7 @@ app.post('/users/login', (req, res) => {
     }
 
     const tokenData = { id: userFound.id, username: userFound.username};
-    console.log('MIAU',tokenData) 
+    console.log('TokenData: ',tokenData) 
 
     const token = jwt.sign(tokenData, process.env.TOKEN_SECRET!, {
         expiresIn: '1h'
